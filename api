@@ -1,0 +1,15 @@
+node server.js
+
+
+curl -X POST http://localhost:3000/events -H "Content-Type: application/json" -d '{"name": "Tech Conference", "date": "2024-10-01T09:00:00Z", "location": "New York", "description": "A conference about the latest in technology."}'
+
+
+curl http://localhost:3000/events/your_event_id
+
+curl -X POST http://localhost:3000/registrations -H "Content-Type: application/json" -d '{"eventId": "your_event_id", "userName": "John Doe", "userEmail": "john@example.com"}'
+
+
+curl http://localhost:3000/events/your_event_id/registrations
+
+
+curl http://localhost:3000/registrations/user/john@example.com
