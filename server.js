@@ -5,81 +5,103 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
-
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/event_registration', {
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/event-registration', {
     useNewUrlParser: true,
     useUnifiedTopology: true
-});
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
 
-// Define schemas and models
-const eventSchema = new mongoose.Schema({
-    name: String,
+app.use(bodyParser.json());
+
+// Define models
+const Event = mongoose.model('Event', new mongoose.Schema({
+    title: String,
+    description: String,
     date: Date,
-    location: String,
-    description: String
-});
+    location: String
+}));
 
-const registrationSchema = new mongoose.Schema({
-    eventId: mongoose.Schema.Types.ObjectId,
+const Registration = mongoose.model('Registration', new mongoose.Schema({
     userName: String,
-    userEmail: String
-});
+    eventId: mongoose.Schema.Types.ObjectId,
+    registrationDate: { type: Date, default: Date.now }
+}));
 
-const Event = mongoose.model('Event', eventSchema);
-const Registration = mongoose.model('Registration', registrationSchema);
+// Routes
 
-// Route to create a new event
-app.post('/events', async (req, res) => {
+// Register for an event
+app.post('/register', async (req, res) => {
+    const { userName, eventId } = req.body;
+    if (!userName || !eventId) {
+        return res.status(400).json({ error: 'User name and event ID are required' });
+    }
+
     try {
-        const event = new Event(req.body);
-        await event.save();
-        res.status(201).json(event);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+        const registration = new Registration({ userName, eventId });
+        await registration.save();
+        res.status(201).json(registration);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Route to view event details
+// View event details
 app.get('/events/:id', async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);
-        if (!event) return res.status(404).json({ error: 'Event not found' });
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
         res.json(event);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Route to register for an event
-app.post('/registrations', async (req, res) => {
+// List all events
+app.get('/events', async (req, res) => {
     try {
-        const registration = new Registration(req.body);
-        await registration.save();
-        res.status(201).json(registration);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+        const events = await Event.find();
+        res.json(events);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Route to view all registrations for an event
+// Manage registrations
+app.get('/registrations', async (req, res) => {
+    try {
+        const registrations = await Registration.find().populate('eventId');
+        res.json(registrations);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// List registrations for a specific event
 app.get('/events/:id/registrations', async (req, res) => {
     try {
         const registrations = await Registration.find({ eventId: req.params.id });
         res.json(registrations);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Route to view all registrations by a user
-app.get('/registrations/user/:email', async (req, res) => {
+// Create an event
+app.post('/events', async (req, res) => {
+    const { title, description, date, location } = req.body;
+    if (!title || !description || !date || !location) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
     try {
-        const registrations = await Registration.find({ userEmail: req.params.email });
-        res.json(registrations);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+        const event = new Event({ title, description, date, location });
+        await event.save();
+        res.status(201).json(event);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
