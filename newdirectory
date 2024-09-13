@@ -1,0 +1,5 @@
+mkdir event-registration-system
+cd event-registration-system
+npm init -y
+
+npm install express mongoose body-parser
