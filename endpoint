@@ -1,0 +1,22 @@
+node server.js
+
+
+
+curl -X POST http://localhost:3000/events -H "Content-Type: application/json" -d '{"title": "Concert", "description": "Live music concert", "date": "2024-10-01T20:00:00Z", "location": "City Hall"}'
+
+
+curl http://localhost:3000/events
+
+
+curl http://localhost:3000/events/{eventId}
+
+
+curl -X POST http://localhost:3000/register -H "Content-Type: application/json" -d '{"userName": "Alice", "eventId": "{eventId}"}'
+
+
+
+
+curl http://localhost:3000/registrations
+
+
+curl http://localhost:3000/events/{eventId}/registrations
